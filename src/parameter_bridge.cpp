@@ -33,13 +33,15 @@
 
 int main(int argc, char * argv[])
 {
-  // ROS 2 node (Initialise first to avoid error)
+  // ROS 2 Initialisation
   rclcpp::init(argc, argv);
-  auto ros2_node = rclcpp::Node::make_shared("ros_bridge");
   
   // ROS 1 node
   ros::init(argc, argv, "ros_bridge");
   ros::NodeHandle ros1_node;
+
+  // ROS 2 node
+  auto ros2_node = rclcpp::Node::make_shared("ros_bridge");
 
   std::list<ros1_bridge::BridgeHandles> all_handles;
   std::list<ros1_bridge::Bridge1to2Handles> bridge1to2_handles;
