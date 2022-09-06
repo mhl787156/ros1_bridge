@@ -33,15 +33,19 @@
 
 int main(int argc, char * argv[])
 {
+  // ROS 2 Initialisation
+  rclcpp::init(argc, argv);
+  
   // ROS 1 node
   ros::init(argc, argv, "ros_bridge");
   ros::NodeHandle ros1_node;
 
   // ROS 2 node
-  rclcpp::init(argc, argv);
   auto ros2_node = rclcpp::Node::make_shared("ros_bridge");
 
   std::list<ros1_bridge::BridgeHandles> all_handles;
+  std::list<ros1_bridge::Bridge1to2Handles> bridge1to2_handles;
+  std::list<ros1_bridge::Bridge2to1Handles> bridge2to1_handles;
   std::list<ros1_bridge::ServiceBridge1to2> service_bridges_1_to_2;
   std::list<ros1_bridge::ServiceBridge2to1> service_bridges_2_to_1;
 
@@ -81,21 +85,79 @@ int main(int argc, char * argv[])
       if (!queue_size) {
         queue_size = 100;
       }
-      printf(
-        "Trying to create bidirectional bridge for topic '%s' "
-        "with ROS 2 type '%s'\n",
-        topic_name.c_str(), type_name.c_str());
 
-      try {
-        ros1_bridge::BridgeHandles handles = ros1_bridge::create_bidirectional_bridge(
-          ros1_node, ros2_node, "", type_name, topic_name, queue_size);
-        all_handles.push_back(handles);
-      } catch (std::runtime_error & e) {
-        fprintf(
-          stderr,
-          "failed to create bidirectional bridge for topic '%s' "
-          "with ROS 2 type '%s': %s\n",
-          topic_name.c_str(), type_name.c_str(), e.what());
+      bool bidrectional = true;
+
+      if(topics[i].hasMember("direction")) {
+        std::string direction = static_cast<std::string>(topics[i]["direction"]);
+        if(direction == "1to2") {
+          bidrectional = false;
+          printf(
+            "Trying to create 1 to 2 bridge for topic '%s' "
+            "with ROS 2 type '%s'\n",
+            topic_name.c_str(), type_name.c_str());
+
+          try {
+            ros1_bridge::Bridge1to2Handles handles = ros1_bridge::create_bridge_from_1_to_2(
+              ros1_node, ros2_node, 
+              "", topic_name, queue_size,
+              type_name, topic_name, queue_size);
+            bridge1to2_handles.push_back(handles);
+            RCLCPP_INFO(ros2_node->get_logger(), "create 1 to 2 bridge for topic %s", topic_name.c_str());
+          } catch (std::runtime_error & e) {
+            fprintf(
+              stderr,
+              "failed to create 1 to 2 bridge for topic '%s' "
+              "with ROS 2 type '%s': %s\n",
+              topic_name.c_str(), type_name.c_str(), e.what());
+          }
+        } else if (direction == "2to1") {
+          bidrectional = false;
+
+          printf(
+            "Trying to create 2 to 1  bridge for topic '%s' "
+            "with ROS 2 type '%s'\n",
+            topic_name.c_str(), type_name.c_str());
+
+          try {
+            ros1_bridge::Bridge2to1Handles handles = ros1_bridge::create_bridge_from_2_to_1(
+              ros2_node, ros1_node, 
+              type_name, topic_name, queue_size,
+              "", topic_name, queue_size);
+            bridge2to1_handles.push_back(handles);
+            RCLCPP_INFO(ros2_node->get_logger(), "create 2 to 1 bridge for topic %s", topic_name.c_str());
+          } catch (std::runtime_error & e) {
+            fprintf(
+              stderr,
+              "failed to create 2 to 1 bridge for topic '%s' "
+              "with ROS 2 type '%s': %s\n",
+              topic_name.c_str(), type_name.c_str(), e.what());
+          }
+        } else {
+          printf(
+            "Topic %s direction unrecognised as '1to2' or '2to1' defaulting as bidrectional",
+            topic_name.c_str()
+          );
+        }
+      }
+
+      if(bidrectional) {
+        printf(
+          "Trying to create bidirectional bridge for topic '%s' "
+          "with ROS 2 type '%s'\n",
+          topic_name.c_str(), type_name.c_str());
+
+        try {
+          ros1_bridge::BridgeHandles handles = ros1_bridge::create_bidirectional_bridge(
+            ros1_node, ros2_node, "", type_name, topic_name, queue_size);
+          all_handles.push_back(handles);
+        } catch (std::runtime_error & e) {
+          fprintf(
+            stderr,
+            "failed to create bidirectional bridge for topic '%s' "
+            "with ROS 2 type '%s': %s\n",
+            topic_name.c_str(), type_name.c_str(), e.what());
+        }
       }
     }
   } else {
