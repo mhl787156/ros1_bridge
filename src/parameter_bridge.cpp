@@ -109,7 +109,7 @@ int main(int argc, char * argv[])
               topic_name.c_str(), type_name.c_str(), e.what());
           }
         } else if (direction == "2to1") {
-          bidrectional = false
+          bidrectional = false;
 
           printf(
             "Trying to create 2 to 1  bridge for topic '%s' "
@@ -118,7 +118,7 @@ int main(int argc, char * argv[])
 
           try {
             ros1_bridge::Bridge2to1Handles handles = ros1_bridge::create_bridge_from_2_to_1(
-              ros1_node, ros2_node, 
+              ros2_node, ros1_node, 
               type_name, topic_name, queue_size,
               "", topic_name, queue_size);
             bridge2to1_handles.push_back(handles);
