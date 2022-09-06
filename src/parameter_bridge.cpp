@@ -103,6 +103,7 @@ int main(int argc, char * argv[])
               "", topic_name, queue_size,
               type_name, topic_name, queue_size);
             bridge1to2_handles.push_back(handles);
+            RCLCPP_INFO(ros2_node->get_logger(), "create 1 to 2 bridge for topic %s", topic_name.c_str());
           } catch (std::runtime_error & e) {
             fprintf(
               stderr,
@@ -124,6 +125,7 @@ int main(int argc, char * argv[])
               type_name, topic_name, queue_size,
               "", topic_name, queue_size);
             bridge2to1_handles.push_back(handles);
+            RCLCPP_INFO(ros2_node->get_logger(), "create 2 to 1 bridge for topic %s", topic_name.c_str());
           } catch (std::runtime_error & e) {
             fprintf(
               stderr,
